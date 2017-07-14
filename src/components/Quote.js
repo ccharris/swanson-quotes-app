@@ -11,7 +11,6 @@ class Quote extends Component {
     componentWillMount(){
         axios.get('https://ron-swanson-quotes.herokuapp.com/v2/quotes')
         .then(request => {
-            console.log(request);
             this.setState({
                 quote: request.data
             });

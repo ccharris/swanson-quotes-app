@@ -1,40 +1,75 @@
 import Unsplash, { toJson } from 'unsplash-js';
-import config from '../config';
 import React, {Component} from 'react';
 import Quote from './Quote';
+import config from '../config';
+
+const html2canvas = window.html2canvas;
 
 const unsplash = new Unsplash({
-     applicationId: 'fcf32339f5c50b1d7523e61de64918324a074492906171eec2fa74e573237e41',
-    secret: 'bcfca4fac61d53a9eeb3257e3666880b3a89d7bb40fc8e5620c71fc799e8786b',
-    callbackUrl: 'urn:ietf:wg:oauth:2.0:oob',
-    Authorization: 'Client-ID fcf32339f5c50b1d7523e61de64918324a074492906171eec2fa74e573237e41'
+    applicationId: config.applicationId,
+    secret: config.secret,
+    callbackUrl: config.callbackUrl,
+    Authorization: config.Authorization
 });
+
+
 
 class Image extends Component {
     constructor(props){
         super(props);
         this.state = {
-            photo: ''
+            url: '',
+            photogLink: '',
+            name: ''
         }
+        
     }
+    printDocument(){
+    const input = document.getElementById('print');
+    html2canvas(input, {useCORS: true}) 
+    .then((canvas) =>{
+        console.log('trying to print');
+      const imgData = canvas.toDataURL()
+      window.open(imgData);
+    });
+
+  }
     componentWillMount(){
         unsplash.photos.getRandomPhoto({query: 'nature'})
         .then(toJson)
         .then(json => {
-            console.log(json.urls.regular);
-            this.setState(() => {
-               return{ photo : json.urls.regular };
-            });
-        })
+            if (json.height > json.width ){
+                this.setState(() => {
+                return{ url : json.urls.full,
+                        photogLink: json.user.links.html,
+                        name: json.user.name
+                         };
+                });
+            } else {
+                unsplash.photos.getRandomPhoto({query: 'nature'})
+                .then(toJson)
+                .then(json => {
+                    this.setState(() => {
+               return{ url : json.urls.full,
+                        photogLink: json.user.links.html,
+                        name: json.user.name};
+                });
+            })
+        }
+    })
     }
 
     
     render(){
         return (
-            <div className="image">
-                <img id="specImg" src={this.state.photo} alt="" />
+            <div>
+            <div id="print" className="image">
+                <img crossOrigin="anonymous" id="specImg" src={this.state.url} alt="" />
                 <Quote />
             </div>
+             <p className="footer">Photo by <a href={`${this.state.photogLink}?utm_source=ron-swanson-app&utm_medium=referral&utm_campaign=api-credit`} >{this.state.name}</a> / <a href="https://unsplash.com/?utm_source=ron-swanson-app&utm_medium=referral&utm_campaign=api-credit">Unsplash</a></p>
+             <button className="imgButton" onClick={() => this.printDocument()}>Download</button>
+             </div>
         )
     }
 }
